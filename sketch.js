@@ -18,7 +18,7 @@ class Sketch {
         this.params.c = 0.8
         this.params.recoverySpeed = 0.1
         this.params.speed = 20
-        this.gui.add(this.params, 'Vdrive', -1, 1, 0.001);
+        this.gui.add(this.params, 'Vdrive', -1, 2, 0.001);
         this.gui.add(this.params, 'b', -10, 10, 0.1);
         this.gui.add(this.params, 'c', -10, 10, 0.1);
         this.gui.add(this.params, 'recoverySpeed', -10, 10, 0.1);
