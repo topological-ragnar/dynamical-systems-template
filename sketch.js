@@ -13,18 +13,17 @@ class Sketch {
         this.gui = new dat.GUI()
         this.params = this.gui.addFolder('parameters');
         this.gui.show()
-        this.params.a = 0
-        this.params.b = 1
-        this.params.c = 0
-        // this.params.d = 0
-        this.params.speed = 0.1
-        this.gui.add(this.params, 'a', -10, 10, 0.1);
+        this.params.Vdrive = 0.35
+        this.params.b = 0.7
+        this.params.c = 0.8
+        this.params.recoverySpeed = 0.1
+        this.params.speed = 20
+        this.gui.add(this.params, 'Vdrive', -1, 1, 0.001);
         this.gui.add(this.params, 'b', -10, 10, 0.1);
-        // this.gui.add(this.params, 'c', -10, 10, 0.1);
         this.gui.add(this.params, 'c', -10, 10, 0.1);
-        this.gui.add(this.params, 'speed', 0, 1,0.01);
+        this.gui.add(this.params, 'recoverySpeed', -10, 10, 0.1);
+        this.gui.add(this.params, 'speed', 0, 100,1);
         var self = this
-        // var button = { reset: self.resetParticles };
 
         this.gui.add(this, 'resetParticles');
         this.gui.add(this, 'toggleFade');
@@ -33,7 +32,6 @@ class Sketch {
 
         this.scene = new THREE.Scene()
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-        // this.projector = new THREE.Projector()
         this.renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true })
         this.renderer.autoClearColor = false
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -92,12 +90,12 @@ class Sketch {
         this.sprites = []
         this.trails = []
         this.trailPoints = []
-        this.numSprites = 20
-        this.spacing = 3
+        this.numSprites = 40
+        this.spacing = this.numSprites/5
         for (var i = 0; i < this.numSprites; i++){
             for (var j = 0; j < this.numSprites; j++){
                 const sprite = new THREE.Sprite(spritematerial);
-                sprite.scale.set(0.03, 0.03, 1)
+                sprite.scale.set(0.01, 0.01, 1)
                 this.scene.add(sprite)
                 this.sprites.push(sprite)
                 sprite.position.x = i / this.spacing - this.numSprites / (this.spacing * 2)
@@ -129,8 +127,8 @@ class Sketch {
         // var points = []
         // for (var i = -50; i < 50; i++) {
         //     points.push(new THREE.Vector3(
-        //         Math.sqrt(Math.abs(this.params.a/this.params.b)) * Math.cos(i /49 * Math.PI),
-        //         Math.sqrt(Math.abs(this.params.a/this.params.b)) * Math.sin(i /49 * Math.PI),
+        //         Math.sqrt(Math.abs(this.params.Vdrive/this.params.b)) * Math.cos(i /49 * Math.PI),
+        //         Math.sqrt(Math.abs(this.params.Vdrive/this.params.b)) * Math.sin(i /49 * Math.PI),
         //         0
         //     ))
         // }
@@ -141,29 +139,63 @@ class Sketch {
         // this.paramPoint.scale.set(0.1, 0.1, 1)
         // this.scene.add(this.paramPoint)
 
-        document.addEventListener('mousedown', (event) => {
+        // Init renderer
+        // var renderer = new THREE.WebGLRenderer();
 
-            event.preventDefault();
+        // Add canvas to HTML body
+        document.body.appendChild(this.renderer.domElement);
 
-            // console.log(1 - 2 * event.clientY / window.innerHeight)
+        // Assign event listener to only target this canvas
+        this.renderer.domElement.addEventListener('mousedown', onCanvasMouseDown, false);
+        function onCanvasMouseDown(event) {
+            if (event) { 
 
-            var vector = new THREE.Vector3(
-                2 * event.clientX / window.innerWidth - 1,
-                 1 - 2 * event.clientY / window.innerHeight,
-                  0.5
-                  ).unproject(self.camera);
 
-            // vector.normalize()
-            vector.sub(self.camera.position).normalize()
+                event.preventDefault();
 
-            vector.multiplyScalar(-5/vector.z)
-                
-            self.sprites[self.nextSprite].position.x = vector.x
-            self.sprites[self.nextSprite].position.y = vector.y
-            self.nextSprite++
-            self.nextSprite = self.nextSprite % (self.numSprites * self.numSprites)
+                // console.log(1 - 2 * event.clientY / window.innerHeight)
+
+                var vector = new THREE.Vector3(
+                    2 * event.clientX / window.innerWidth - 1,
+                    1 - 2 * event.clientY / window.innerHeight,
+                    0.5
+                ).unproject(self.camera);
+
+                // vector.normalize()
+                vector.sub(self.camera.position).normalize()
+
+                vector.multiplyScalar(-5 / vector.z)
+
+                self.sprites[self.nextSprite].position.x = vector.x
+                self.sprites[self.nextSprite].position.y = vector.y
+                self.nextSprite++
+                self.nextSprite = self.nextSprite % (self.numSprites * self.numSprites)
+            }
         }
-            , false);
+
+        // document.addEventListener('mousedown', (event) => {
+
+        //     event.preventDefault();
+
+        //     // console.log(1 - 2 * event.clientY / window.innerHeight)
+
+        //     var vector = new THREE.Vector3(
+        //         2 * event.clientX / window.innerWidth - 1,
+        //          1 - 2 * event.clientY / window.innerHeight,
+        //           0.5
+        //           ).unproject(self.camera);
+
+        //     // vector.normalize()
+        //     vector.sub(self.camera.position).normalize()
+
+        //     vector.multiplyScalar(-5/vector.z)
+                
+        //     self.sprites[self.nextSprite].position.x = vector.x
+        //     self.sprites[self.nextSprite].position.y = vector.y
+        //     self.nextSprite++
+        //     self.nextSprite = self.nextSprite % (self.numSprites * self.numSprites)
+        // }
+        //     , false);
 
     }
 
@@ -202,19 +234,19 @@ class Sketch {
     }
 
     xpotential(x,y) {
-        return this.params.c + (this.params.a) * x - this.params.b * y -  x * (x * x + y * y) 
+        return x-Math.pow(x,3)/3 - y + this.params.Vdrive
     }
 
     ypotential(x,y) {
-        return this.params.a * y + this.params.b * x - y * (x * x + y * y)
+        return this.params.recoverySpeed*(x +this.params.b - this.params.c * y )
     }
 
     setGraph() {
         var points = []
         for (var i = -50; i < 50; i++) {
             points.push(new THREE.Vector3(
-                Math.sqrt(Math.abs(this.params.a/this.params.b)) * Math.cos(i /49 * Math.PI),
-                Math.sqrt(Math.abs(this.params.a/this.params.b)) * Math.sin(i /49 * Math.PI),
+                Math.sqrt(Math.abs(this.params.Vdrive/this.params.b)) * Math.cos(i /49 * Math.PI),
+                Math.sqrt(Math.abs(this.params.Vdrive/this.params.b)) * Math.sin(i /49 * Math.PI),
                 0
             ))
         }
@@ -228,13 +260,13 @@ class Sketch {
 
         this.renderer.render(this.scene, this.camera);
 
-        // if(this.params.b < 0 && this.params.a > 0 || this.params.b > 0 && this.params.a < 0){
+        // if(this.params.b < 0 && this.params.Vdrive > 0 || this.params.b > 0 && this.params.Vdrive < 0){
         //     this.setGraph()
         // } else {
         //     this.discrimObject.visible = false
         // }
 
-        // this.paramPoint.position.x = this.params.a/10-3
+        // this.paramPoint.position.x = this.params.Vdrive/10-3
         // this.paramPoint.position.y = this.params.b/ 10 - 3
 
         this.sprites.forEach(sprite => {
@@ -243,8 +275,8 @@ class Sketch {
         for (var i = 0; i < this.numSprites * this.numSprites; i++){
             var x = this.sprites[i].position.x
             var y = this.sprites[i].position.y
-            this.sprites[i].position.x += dt*this.xpotential(x,y)
-            this.sprites[i].position.y += dt * this.ypotential(x, y)
+            this.sprites[i].position.x += dt*this.xpotential(x,y)/10
+            this.sprites[i].position.y += dt * this.ypotential(x, y)/10
             // if(Math.abs(this.potential(x))< this.params.speed){
             //     this.sprites[i].position.x = i / this.spacing - this.numSprites / (this.spacing * 2)
             // }
