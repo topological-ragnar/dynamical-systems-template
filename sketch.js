@@ -10,6 +10,7 @@ const { timers } = require('jquery')
 class Sketch {
 
     constructor() {
+
         this.gui = new dat.GUI()
         this.params = this.gui.addFolder('parameters');
         this.gui.show()
@@ -24,7 +25,6 @@ class Sketch {
         this.gui.add(this.params, 'recoverySpeed', -10, 10, 0.1);
         this.gui.add(this.params, 'speed', 0, 100,1);
         var self = this
-
         this.gui.add(this, 'resetParticles');
         this.gui.add(this, 'toggleFade');
         
@@ -107,42 +107,13 @@ class Sketch {
         // this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
 
-
-        // var axis = new THREE.BufferGeometry()
-        // var points = []
-        // for (var i = -50; i < 50; i++) {
-        //     points.push(new THREE.Vector3(i / 5, 0, 0))
-        // }
-        // axis.setFromPoints(points)
         var axisMaterial = new THREE.LineDashedMaterial({
             color: 0x0fe0ee,
             linewidth: 1,
             scale: 1,
             dashSize: 3,
             gapSize: 2})
-        // var axisObject = new THREE.Line(axis,axisMaterial)
-        // this.scene.add(axisObject)
 
-        // this.discrim = new THREE.BufferGeometry()
-        // var points = []
-        // for (var i = -50; i < 50; i++) {
-        //     points.push(new THREE.Vector3(
-        //         Math.sqrt(Math.abs(this.params.Vdrive/this.params.b)) * Math.cos(i /49 * Math.PI),
-        //         Math.sqrt(Math.abs(this.params.Vdrive/this.params.b)) * Math.sin(i /49 * Math.PI),
-        //         0
-        //     ))
-        // }
-        // this.discrim.setFromPoints(points)
-        // this.discrimObject = new THREE.Line(this.discrim, axisMaterial)
-        // this.scene.add(this.discrimObject)
-        // this.paramPoint = new THREE.Sprite(spritematerial)
-        // this.paramPoint.scale.set(0.1, 0.1, 1)
-        // this.scene.add(this.paramPoint)
-
-        // Init renderer
-        // var renderer = new THREE.WebGLRenderer();
-
-        // Add canvas to HTML body
         document.body.appendChild(this.renderer.domElement);
 
         // Assign event listener to only target this canvas
@@ -173,30 +144,6 @@ class Sketch {
             }
         }
 
-        // document.addEventListener('mousedown', (event) => {
-
-        //     event.preventDefault();
-
-        //     // console.log(1 - 2 * event.clientY / window.innerHeight)
-
-        //     var vector = new THREE.Vector3(
-        //         2 * event.clientX / window.innerWidth - 1,
-        //          1 - 2 * event.clientY / window.innerHeight,
-        //           0.5
-        //           ).unproject(self.camera);
-
-        //     // vector.normalize()
-        //     vector.sub(self.camera.position).normalize()
-
-        //     vector.multiplyScalar(-5/vector.z)
-                
-        //     self.sprites[self.nextSprite].position.x = vector.x
-        //     self.sprites[self.nextSprite].position.y = vector.y
-        //     self.nextSprite++
-        //     self.nextSprite = self.nextSprite % (self.numSprites * self.numSprites)
-        // }
-        //     , false);
-
     }
 
     start() {
@@ -206,85 +153,52 @@ class Sketch {
         })
         loop((dt) => {
             this.render()
-            // if (this.environment.controls) {
-            //     this.environment.controls.update(dt)
-            // }
         }).start()
     }
 
-    toggleFade(){
-        if (this.fade > 0) {
-            this.fade = 0
-        } else {
-            this.fade = 0.03
-        }
-        this.fadeMesh.material.opacity = this.fade
+    xVelocity(x,y){
+        // return -Math.pow(x,3) + x*y
+        return -y
+    }
+    yVelocity(x, y) {
+        // return -Math.pow(x,3) + x*y
+        return x
     }
 
-    resetParticles(){
-        // console.log(this.numSprites)
+    resetParticles () {
+        this.spacing = this.numSprites / 5
         for (var i = 0; i < this.numSprites; i++) {
-            // console.log('meow')
-            for (var j = 0; j < this.numSprites; j++){
-                var index = i*this.numSprites+j
-                this.sprites[index].position.x = i / this.spacing - this.numSprites / (this.spacing * 2)
-                this.sprites[index].position.y = j / this.spacing - this.numSprites / (this.spacing * 2)
+            for (var j = 0; j < this.numSprites; j++) {
+                var sprite  = this.sprites[i*this.numSprites + j]
+                sprite.scale.set(0.01, 0.01, 1)
+                sprite.position.x = i / this.spacing - this.numSprites / (this.spacing * 2)
+                sprite.position.y = j / this.spacing - this.numSprites / (this.spacing * 2)
+                sprite.position.z = 0
             }
         }
     }
 
-    xpotential(x,y) {
-        return x-Math.pow(x,3)/3 - y + this.params.Vdrive
-    }
-
-    ypotential(x,y) {
-        return this.params.recoverySpeed*(x +this.params.b - this.params.c * y )
-    }
-
-    setGraph() {
-        var points = []
-        for (var i = -50; i < 50; i++) {
-            points.push(new THREE.Vector3(
-                Math.sqrt(Math.abs(this.params.Vdrive/this.params.b)) * Math.cos(i /49 * Math.PI),
-                Math.sqrt(Math.abs(this.params.Vdrive/this.params.b)) * Math.sin(i /49 * Math.PI),
-                0
-            ))
+    toggleFade () {
+        if(this.fade > 0){
+            this.fade = 0
+        } else {
+            this.fade = 0.03
         }
-        this.discrim.setFromPoints(points)
-        this.discrimObject.visible = true
     }
 
     render() {
-        // requestAnimationFrame(this.animate);
-        var dt = this.clock.getDelta()*this.params.speed;
+        var dt = this.clock.getDelta()*this.params.speed/1000000;
 
         this.renderer.render(this.scene, this.camera);
 
-        // if(this.params.b < 0 && this.params.Vdrive > 0 || this.params.b > 0 && this.params.Vdrive < 0){
-        //     this.setGraph()
-        // } else {
-        //     this.discrimObject.visible = false
-        // }
-
-        // this.paramPoint.position.x = this.params.Vdrive/10-3
-        // this.paramPoint.position.y = this.params.b/ 10 - 3
-
-        this.sprites.forEach(sprite => {
-
-        })
-        for (var i = 0; i < this.numSprites * this.numSprites; i++){
-            var x = this.sprites[i].position.x
-            var y = this.sprites[i].position.y
-            this.sprites[i].position.x += dt*this.xpotential(x,y)/10
-            this.sprites[i].position.y += dt * this.ypotential(x, y)/10
-            // if(Math.abs(this.potential(x))< this.params.speed){
-            //     this.sprites[i].position.x = i / this.spacing - this.numSprites / (this.spacing * 2)
-            // }
+        for(var i = 0; i< this.numSprites; i++){
+            for(var j = 0; j < this.numSprites; j++){
+                var x = this.sprites[i*this.numSprites + j].position.x
+                var y = this.sprites[i * this.numSprites + j].position.y
+                this.sprites[i * this.numSprites + j].position.x += this.xVelocity(x,y)
+                this.sprites[i * this.numSprites + j].position.y += this.yVelocity(x, y)
+            }
         }
-        // this.controls.update();
-
-        // this.updateTrails()
-
         
     }
     
